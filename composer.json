@@ -1,0 +1,27 @@
+{
+    "name": "chh/pipe-silex",
+    "description": "Silex Extension which integrates an Asset Pipeline",
+    "license": "MITt ",
+    "authors": [
+        {
+            "name": "Christoph Hochstrasser",
+            "email": "me@christophh.net",
+            "homepage": "http://christophh.net"
+        }
+    ],
+    "keywords": ["silex", "assets"],
+    "minimum-stability": "dev",
+    "require": {
+        "chh/pipe": "*@dev",
+        "chh/jazz": "*@stable"
+    },
+    "require-dev": {
+        "silex/silex": "*@dev",
+        "twig/twig": "*@stable"
+    },
+    "autoload": {
+        "psr-0": {
+            "Pipe\\": "lib/"
+        }
+    }
+}
