@@ -1,14 +1,13 @@
-#= require jquery.js
+#= require jquery
 
 class Application
     constructor: ->
         console.log "Setup"
 
     run: ->
-        $("body > h1").fadeOut().fadeIn()
+        $("body > h1").fadeOut("fast").fadeIn("fast")
 
 app = new Application
 
-$(document).ready ->
-    app.run()
+$ -> app.run()
 

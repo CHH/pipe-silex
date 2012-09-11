@@ -43,6 +43,5 @@ class PipeServiceProvider implements ServiceProviderInterface
     }
 
     function boot(Application $app)
-    {
-    }
+    {}
 }
