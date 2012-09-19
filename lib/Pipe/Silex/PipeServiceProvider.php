@@ -36,12 +36,12 @@ class PipeServiceProvider implements ServiceProviderInterface
         })
         ->assert("logicalPath", ".+")
         ->bind("pipe.assets");
+    }
 
+    function boot(Application $app)
+    {
         if (isset($app["twig"])) {
             $app["twig"]->addExtension(new PipeTwigExtension);
         }
     }
-
-    function boot(Application $app)
-    {}
 }
