@@ -37,7 +37,7 @@ class PipeService
     {
         if (!isset($this->app["pipe.use_precompiled"]) or false == $this->app["pipe.use_precompiled"]) {
             return $this->app["url_generator"]->generate(
-                "pipe.assets", array("logicalPath" => $logicalPath)
+                PipeServiceProvider::ROUTE_ASSET, array("logicalPath" => $logicalPath)
             );
         }
 

@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PipeServiceProvider implements ServiceProviderInterface
 {
+    const ROUTE_ASSET = 'pipe.asset';
+
     function register(Application $app)
     {
         $app->register(new \Silex\Provider\UrlGeneratorServiceProvider());
@@ -17,7 +19,7 @@ class PipeServiceProvider implements ServiceProviderInterface
             return new PipeService($app);
         });
 
-        $app->get("/_pipe/assets/{logicalPath}", function($logicalPath) use ($app) {
+        $app->get("/_pipe/asset/{logicalPath}", function($logicalPath) use ($app) {
             $asset = $app["pipe"]->environment->find($logicalPath);
 
             if (!$asset) {
@@ -35,7 +37,7 @@ class PipeServiceProvider implements ServiceProviderInterface
             return $res;
         })
         ->assert("logicalPath", ".+")
-        ->bind("pipe.assets");
+        ->bind(self::ROUTE_ASSET);
     }
 
     function boot(Application $app)
