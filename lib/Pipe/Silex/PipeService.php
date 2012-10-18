@@ -3,6 +3,7 @@
 namespace Pipe\Silex;
 
 use Pipe\Environment;
+use Pipe\Config;
 use Silex\Application;
 use Jazz;
 
@@ -14,19 +15,20 @@ class PipeService
 
     function __construct(Application $app)
     {
-        $this->environment = new Environment;
         $this->app = $app;
 
-        if (isset($app["pipe.root"]) and !isset($app["pipe.load_path"])) {
-            $root = $app["pipe.root"];
+        $config = new Config;
+        $config->debug = isset($app['pipe.debug']) ? $app['pipe.debug'] : false;
 
-            $app["pipe.load_path"] = array(
-                "$root/vendor/stylesheets",
-                "$root/stylesheets",
-                "$root/vendor/javascripts",
-                "$root/javascripts",
-            );
+        if (isset($app['pipe.css_compressor'])) {
+            $config->cssCompressor = $app['pipe.css_compressor'];
         }
+
+        if (isset($app['pipe.js_compressor'])) {
+            $config->jsCompressor = $app['pipe.js_compressor'];
+        }
+
+        $this->environment = $config->createEnvironment();
 
         foreach ($app["pipe.load_path"] as $path) {
             $this->environment->appendPath($path);
@@ -53,16 +55,25 @@ class PipeService
         $asset = $this->environment->find($logicalPath);
         $html = '';
 
-        switch ($asset->getContentType()) {
+        $contentType = $asset->getContentType();
+
+        switch ($contentType) {
             case "application/javascript":
                 $html = Jazz::render(array(
-                    '#script', array('src' => $this->assetLink($logicalPath), 'type' => $asset->getContentType())
+                    '#script', array('src' => $this->assetLink($logicalPath), 'type' => $contentType)
                 ));
                 break;
             case "text/css":
                 $html = Jazz::render(array(
-                    '#link', array('rel' => 'stylesheet', 'href' => $this->assetLink($logicalPath), 'type' => $asset->getContentType())
+                    '#link', array('rel' => 'stylesheet', 'href' => $this->assetLink($logicalPath), 'type' => $contentType)
                 ));
+                break;
+            default:
+                if (stripos($contentType, 'image/') === 0) {
+                    $html = Jazz::render(array(
+                        '#img', array('src' => $this->assetLink($logicalPath), 'alt' => '')
+                    ));
+                }
                 break;
         }
 
