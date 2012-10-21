@@ -6,6 +6,7 @@ use Pipe\Environment;
 use Pipe\Config;
 use Silex\Application;
 use Jazz;
+use CHH\Silex\CacheServiceProvider\CacheNamespace;
 
 class PipeService
 {
@@ -19,6 +20,12 @@ class PipeService
 
         $config = new Config;
         $config->debug = isset($app['pipe.debug']) ? $app['pipe.debug'] : false;
+
+        if (isset($app['caches'])) {
+            $app['caches']['pipe'] = $app->share(function($app) {
+                return new CacheNamespace('pipe', $app['caches']['default']);
+            });
+        }
 
         if (isset($app['pipe.css_compressor'])) {
             $config->cssCompressor = $app['pipe.css_compressor'];
@@ -43,7 +50,7 @@ class PipeService
             );
         }
 
-        $manifest = json_decode(@file_get_contents($app["pipe.manifest"]));
+        $manifest = $this->manifest();
 
         if (isset($manifest->$logicalPath)) {
             return "{$app["pipe.prefix"]}/{$manifest->$logicalPath}";
@@ -78,5 +85,30 @@ class PipeService
         }
 
         return $html;
+    }
+
+    protected function manifest()
+    {
+        if (null === $this->manifest) {
+            if (isset($this->app['caches']['pipe'])) {
+                $cache = $this->app['caches']['pipe'];
+
+                if ($cache->contains('manifest')) {
+                    $this->manifest = $cache->fetch('manifest');
+                } else {
+                    $this->manifest = $this->fetchManifest();
+                    $cache->save('manifest', $this->manifest);
+                }
+            } else {
+                $this->manifest = $this->fetchManifest();
+            }
+        }
+
+        return $this->manifest;
+    }
+
+    private function fetchManifest()
+    {
+        return json_decode(@file_get_contents($this->app["pipe.manifest"]));
     }
 }
