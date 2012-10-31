@@ -13,6 +13,7 @@ class PipeService
     public $environment;
 
     protected $app;
+    protected $manifest;
 
     function __construct(Application $app)
     {
@@ -53,7 +54,15 @@ class PipeService
         $manifest = $this->manifest();
 
         if (isset($manifest->$logicalPath)) {
-            return "{$app["pipe.prefix"]}/{$manifest->$logicalPath}";
+            $path = "{$this->app["pipe.prefix"]}/{$manifest->$logicalPath}";
+
+            $acceptedEncodings = $this->app['request']->headers->get('Accept-Encoding');
+
+            if (strpos($acceptedEncodings, 'gzip') !== false and php_sapi_name() !== 'cli-server') {
+                $path .= '.gz';
+            }
+
+            return $path;
         }
     }
 
@@ -90,7 +99,7 @@ class PipeService
     protected function manifest()
     {
         if (null === $this->manifest) {
-            if (isset($this->app['caches']['pipe'])) {
+            if (isset($this->app['caches'])) {
                 $cache = $this->app['caches']['pipe'];
 
                 if ($cache->contains('manifest')) {
