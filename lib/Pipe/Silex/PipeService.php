@@ -2,45 +2,37 @@
 
 namespace Pipe\Silex;
 
-use Pipe\Environment;
-use Pipe\Config;
+use Pipe\AssetDumper;
 use Silex\Application;
 use Jazz;
 use CHH\Silex\CacheServiceProvider\CacheNamespace;
 
 class PipeService
 {
-    public $environment;
-
     protected $app;
     protected $manifest;
 
     function __construct(Application $app)
     {
         $this->app = $app;
+    }
 
-        $config = new Config;
-        $config->debug = isset($app['pipe.debug']) ? $app['pipe.debug'] : false;
+    function precompile()
+    {
+        $dir = $this->app['pipe.precompile_directory'];
+        $dumper = new AssetDumper($dir);
 
-        if (isset($app['caches'])) {
-            $app['caches']['pipe'] = $app->share(function($app) {
-                return new CacheNamespace('pipe', $app['caches']['default']);
-            });
+        foreach ($this->app['pipe.precompile'] as $logicalPath) {
+            $asset = $this->app['pipe.environment']->find($logicalPath, array('bundled' => true));
+
+            if (!$asset) {
+                throw new \UnexpectedValueException("Asset '$logicalPath' not found.");
+            }
+
+            $dumper->add($asset);
         }
 
-        if (isset($app['pipe.css_compressor'])) {
-            $config->cssCompressor = $app['pipe.css_compressor'];
-        }
-
-        if (isset($app['pipe.js_compressor'])) {
-            $config->jsCompressor = $app['pipe.js_compressor'];
-        }
-
-        $this->environment = $config->createEnvironment();
-
-        foreach ($app["pipe.load_path"] as $path) {
-            $this->environment->appendPath($path);
-        }
+        $dumper->dump();
     }
 
     function assetLink($logicalPath)
@@ -68,8 +60,12 @@ class PipeService
 
     function assetLinkTag($logicalPath)
     {
-        $asset = $this->environment->find($logicalPath);
+        $asset = $this->app['pipe.environment']->find($logicalPath);
         $html = '';
+
+        if (!$asset) {
+            return "";
+        }
 
         $contentType = $asset->getContentType();
 

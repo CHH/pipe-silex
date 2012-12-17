@@ -5,6 +5,9 @@ namespace Pipe\Silex;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
+use Pipe\Environment;
+use Pipe\Config;
+
 use Symfony\Component\HttpFoundation\Response;
 
 class PipeServiceProvider implements ServiceProviderInterface
@@ -14,6 +17,12 @@ class PipeServiceProvider implements ServiceProviderInterface
     function register(Application $app)
     {
         $app->register(new \Silex\Provider\UrlGeneratorServiceProvider());
+
+        if (isset($app['caches'])) {
+            $app['caches']['pipe'] = $app->share(function($app) {
+                return new CacheNamespace('pipe', $app['caches']['default']);
+            });
+        }
 
         $app['pipe.precompile'] = new \ArrayObject(array(
             'application.js',
@@ -44,8 +53,29 @@ class PipeServiceProvider implements ServiceProviderInterface
             return new PipeService($app);
         });
 
+        $app['pipe.environment'] = $app->share(function() use ($app) {
+            $config = new Config;
+            $config->debug = isset($app['pipe.debug']) ? $app['pipe.debug'] : false;
+
+            if (isset($app['pipe.css_compressor'])) {
+                $config->cssCompressor = $app['pipe.css_compressor'];
+            }
+
+            if (isset($app['pipe.js_compressor'])) {
+                $config->jsCompressor = $app['pipe.js_compressor'];
+            }
+
+            $environment = $config->createEnvironment();
+
+            foreach ($app["pipe.load_path"] as $path) {
+                $environment->appendPath($path);
+            }
+
+            return $environment;
+        });
+
         $app->get("/_pipe/asset/{logicalPath}", function($logicalPath) use ($app) {
-            $asset = $app["pipe"]->environment->find($logicalPath, array('bundled' => true));
+            $asset = $app["pipe.environment"]->find($logicalPath, array('bundled' => true));
 
             if (!$asset) {
                 return $app->abort(404, "Asset '$logicalPath' not found");
