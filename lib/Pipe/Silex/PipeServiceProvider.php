@@ -19,8 +19,9 @@ class PipeServiceProvider implements ServiceProviderInterface
         $app->register(new \Silex\Provider\UrlGeneratorServiceProvider());
 
         if (isset($app['caches'])) {
-            $app['caches']['pipe'] = $app->share(function($app) {
-                return new CacheNamespace('pipe', $app['caches']['default']);
+            $app['caches'] = $app->extend('caches', function($caches) use ($app) {
+                $caches['pipe'] = CacheNamespace('pipe', $app['caches']['default']);
+                return $caches;
             });
         }
 
