@@ -8,6 +8,7 @@ use Silex\ServiceProviderInterface;
 use Pipe\Environment;
 use Pipe\Config;
 
+use CHH\Silex\CacheServiceProvider\CacheNamespace;
 use Symfony\Component\HttpFoundation\Response;
 
 class PipeServiceProvider implements ServiceProviderInterface
@@ -19,10 +20,10 @@ class PipeServiceProvider implements ServiceProviderInterface
         $app->register(new \Silex\Provider\UrlGeneratorServiceProvider());
 
         if (isset($app['caches'])) {
-            $app['caches'] = $app->extend('caches', function($caches) use ($app) {
-                $caches['pipe'] = CacheNamespace('pipe', $app['caches']['default']);
+            $app['caches'] = $app->share($app->extend('caches', function($caches) use ($app) {
+                $caches['pipe'] = new CacheNamespace('pipe', $caches['default']);
                 return $caches;
-            });
+            }));
         }
 
         $app['pipe.precompile'] = new \ArrayObject(array(

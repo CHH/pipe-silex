@@ -20,19 +20,10 @@ class PipeService
     function precompile()
     {
         $dir = $this->app['pipe.precompile_directory'];
-        $dumper = new AssetDumper($dir);
 
-        foreach ($this->app['pipe.precompile'] as $logicalPath) {
-            $asset = $this->app['pipe.environment']->find($logicalPath, array('bundled' => true));
-
-            if (!$asset) {
-                throw new \UnexpectedValueException("Asset '$logicalPath' not found.");
-            }
-
-            $dumper->add($asset);
-        }
-
-        $dumper->dump();
+        $manifest = new Manifest($this->app['pipe.environment'], $dir . "/manifest.json", $dir);
+        $manifest->compress = true;
+        $manifest->compile((array) $this->app['pipe.precompile']);
     }
 
     function assetLink($logicalPath)
@@ -45,8 +36,8 @@ class PipeService
 
         $manifest = $this->manifest();
 
-        if (isset($manifest->$logicalPath)) {
-            $path = "{$this->app["pipe.prefix"]}/{$manifest->$logicalPath}";
+        if (isset($manifest->assets->$logicalPath)) {
+            $path = "{$this->app["pipe.prefix"]}/{$manifest->assets->$logicalPath}";
 
             $acceptedEncodings = $this->app['request']->headers->get('Accept-Encoding');
 
