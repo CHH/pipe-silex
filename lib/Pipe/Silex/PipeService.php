@@ -2,7 +2,7 @@
 
 namespace Pipe\Silex;
 
-use Pipe\AssetDumper;
+use Pipe\Manifest;
 use Silex\Application;
 use Jazz;
 use CHH\Silex\CacheServiceProvider\CacheNamespace;
