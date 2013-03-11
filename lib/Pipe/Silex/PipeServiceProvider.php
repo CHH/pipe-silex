@@ -76,6 +76,14 @@ class PipeServiceProvider implements ServiceProviderInterface
             return $environment;
         });
 
+        if (isset($app["twig"])) {
+            $app['twig'] = $app->share($app->extend('twig', function($twig) {
+                $twig->addExtension(new PipeTwigExtension);
+
+                return $twig;
+            }));
+        }
+
         $app->get("/_pipe/asset/{logicalPath}", function($logicalPath) use ($app) {
             $asset = $app["pipe.environment"]->find($logicalPath, array('bundled' => true));
 
@@ -83,12 +91,31 @@ class PipeServiceProvider implements ServiceProviderInterface
                 return $app->abort(404, "Asset '$logicalPath' not found");
             }
 
-            $res = new Response($asset->getBody(), 200);
+            $lastModified = new \DateTime;
+            $lastModified->setTimestamp($asset->getLastModified());
+
+            $res = new Response();
+            $res->setPublic();
+            $res->setLastModified($lastModified);
+
+            if ($res->isNotModified($app['request'])) {
+                return $res;
+            }
+
+            $time = microtime(true);
+
             $res->headers->set("Content-Type", $asset->getContentType());
             $res->headers->set("Content-Length", strlen($asset->getBody()));
+            $res->setContent($asset->getBody());
 
-            if (isset($app["logger"]) and $app["logger"] !== null) {
-                $app["logger"]->log("Pipe: Serving '$logicalPath'");
+            if (isset($app["monolog"]) and $app["monolog"] !== null) {
+                $d = microtime(true) - $time;
+
+                $app["monolog"]->addInfo(
+                    sprintf('pipe: Generated "%s" in %f seconds', $logicalPath, $d), array(
+                        'time' => $d, 'path' => $logicalPath, 'realpath' => $asset->path
+                    )
+                );
             }
 
             return $res;
@@ -99,8 +126,5 @@ class PipeServiceProvider implements ServiceProviderInterface
 
     function boot(Application $app)
     {
-        if (isset($app["twig"])) {
-            $app["twig"]->addExtension(new PipeTwigExtension);
-        }
     }
 }
