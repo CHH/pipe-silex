@@ -6,7 +6,6 @@ use Silex\Application;
 use Silex\ServiceProviderInterface;
 
 use Pipe\Environment;
-use Pipe\Config;
 
 use CHH\Silex\CacheServiceProvider\CacheNamespace;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,34 +20,32 @@ class PipeServiceProvider implements ServiceProviderInterface
 
         if (isset($app['caches'])) {
             $app['caches'] = $app->share($app->extend('caches', function($caches) use ($app) {
-                $caches['pipe'] = new CacheNamespace('pipe', $caches['default']);
+                $caches['pipe'] = $app->share($app['cache.namespace']('pipe', $caches['default']));
                 return $caches;
             }));
         }
 
-        $app['pipe.precompile'] = new \ArrayObject(array(
-            'application.js',
-            'application.css'
-        ));
+        $app['pipe.precompile'] = function() {
+            return array(
+                'application.js',
+                'application.css'
+            );
+        };
 
         $app['pipe.load_path'] = $app->share(function() use ($app) {
-            $loadPath = new \SplDoublyLinkedList;
-
             if (isset($app['pipe.root'])) {
                 $root = $app['pipe.root'];
 
-                foreach (array(
+                return array(
                     "$root/images",
                     "$root/javascripts",
                     "$root/vendor/javascripts",
                     "$root/stylesheets",
                     "$root/vendor/stylesheets",
-                ) as $path) {
-                    $loadPath->push($path);
-                }
+                );
             }
 
-            return $loadPath;
+            return array();
         });
 
         $app["pipe"] = $app->share(function($app) {
@@ -56,18 +53,15 @@ class PipeServiceProvider implements ServiceProviderInterface
         });
 
         $app['pipe.environment'] = $app->share(function() use ($app) {
-            $config = new Config;
-            $config->debug = isset($app['pipe.debug']) ? $app['pipe.debug'] : false;
+            $environment = new Environment;
 
             if (isset($app['pipe.css_compressor'])) {
-                $config->cssCompressor = $app['pipe.css_compressor'];
+                $environment->setCssCompressor($app['pipe.css_compressor']);
             }
 
             if (isset($app['pipe.js_compressor'])) {
-                $config->jsCompressor = $app['pipe.js_compressor'];
+                $environment->setJsCompressor($app['pipe.js_compressor']);
             }
-
-            $environment = $config->createEnvironment();
 
             foreach ($app["pipe.load_path"] as $path) {
                 $environment->appendPath($path);
