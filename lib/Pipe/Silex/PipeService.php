@@ -39,10 +39,12 @@ class PipeService
         if (isset($manifest->assets->$logicalPath)) {
             $path = "{$this->app["pipe.prefix"]}/{$manifest->assets->$logicalPath}";
 
-            $acceptedEncodings = $this->app['request']->headers->get('Accept-Encoding');
+            if ($this->app['pipe.use_precompiled_gzip']) {
+                $acceptedEncodings = $this->app['request']->headers->get('Accept-Encoding');
 
-            if (strpos($acceptedEncodings, 'gzip') !== false and php_sapi_name() !== 'cli-server') {
-                $path .= '.gz';
+                if (strpos($acceptedEncodings, 'gzip') !== false and php_sapi_name() !== 'cli-server') {
+                    $path .= '.gz';
+                }
             }
 
             return $path;

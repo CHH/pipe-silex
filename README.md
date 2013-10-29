@@ -22,6 +22,8 @@ Then install with:
   array, e.g. `$app['pipe.load_path'] = [__DIR__ . '/css', __DIR__ . '/js']`.
 * `pipe.use_precompiled` (default: `false`): Point links generated with
   the helpers to precompiled versions of assets.
+* `pipe.use_precompiled_gzip` (default: `true`): Use gzipped precompiled assets
+  if possible.
 * `pipe.precompile` (default: `['application.js', 'application.css']`):
   List of files which should be dumped to the filesystem when the
   `precompile` method was invoked.

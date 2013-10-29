@@ -18,6 +18,8 @@ class PipeServiceProvider implements ServiceProviderInterface
     {
         $app->register(new \Silex\Provider\UrlGeneratorServiceProvider());
 
+        $app['pipe.use_precompiled_gzip'] = true;
+
         if (isset($app['caches'])) {
             $app['caches'] = $app->share($app->extend('caches', function($caches) use ($app) {
                 $caches['pipe'] = $app->share($app['cache.namespace']('pipe', $caches['default']));
