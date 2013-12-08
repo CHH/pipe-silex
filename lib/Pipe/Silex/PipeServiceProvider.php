@@ -50,6 +50,14 @@ class PipeServiceProvider implements ServiceProviderInterface
             return array();
         });
 
+        $app["pipe.manifest"] = $app->share(function() use ($app) {
+            if (isset($app['pipe.precompile_directory'])) {
+                return $app['pipe.precompile_directory'] . "/manifest.json";
+            }
+
+            return "manifest.json";
+        });
+
         $app["pipe"] = $app->share(function($app) {
             return new PipeService($app);
         });
