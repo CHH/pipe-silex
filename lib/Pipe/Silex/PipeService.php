@@ -21,7 +21,7 @@ class PipeService
     {
         $dir = $this->app['pipe.precompile_directory'];
 
-        $manifest = new Manifest($this->app['pipe.environment'], $dir . "/manifest.json", $dir);
+        $manifest = new Manifest($this->app['pipe.environment'], $this->app['pipe.manifest'], $dir);
         $manifest->compress = true;
         $manifest->compile((array) $this->app['pipe.precompile']);
     }
