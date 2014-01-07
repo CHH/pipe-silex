@@ -65,12 +65,14 @@ class PipeServiceProvider implements ServiceProviderInterface
         $app['pipe.environment'] = $app->share(function() use ($app) {
             $environment = new Environment;
 
-            if (isset($app['pipe.css_compressor'])) {
-                $environment->setCssCompressor($app['pipe.css_compressor']);
-            }
+            if (!$app['pipe.debug']) {
+                if (isset($app['pipe.css_compressor'])) { 
+                    $environment->setCssCompressor($app['pipe.css_compressor']);
+                }
 
-            if (isset($app['pipe.js_compressor'])) {
-                $environment->setJsCompressor($app['pipe.js_compressor']);
+                if (isset($app['pipe.js_compressor'])) {
+                    $environment->setJsCompressor($app['pipe.js_compressor']);
+                }
             }
 
             foreach ($app["pipe.load_path"] as $path) {
